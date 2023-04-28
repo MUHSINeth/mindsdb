@@ -4,25 +4,30 @@ import os
 from flask import Response
 
 
-def http_error(status_code, title, detail=''):
-    ''' Wrapper for error responce acoording with RFC 7807 (https://tools.ietf.org/html/rfc7807)
+def http_error(status_code, detail=None, type=None):
+    """
+    Returns an HTTP error compliant with RFC 7807.
+    """
+    response = {
+        "status": status_code,
+    }
+    if type:
+        response["type"] = type
+    if detail:
+        response["detail"] = detail
+    return make_response(jsonify(response), status_code)
+    
+@app.errorhandler(400)
+def handle_bad_request(e):
+    return http_error(400, "Bad request")
 
-        :param status_code: int - http status code for response
-        :param title: str
-        :param detail: str
+@app.errorhandler(401)
+def handle_unauthorized(e):
+    return http_error(401, "Unauthorized")
 
-        :return: flask Response object
-    '''
-    return Response(
-        response=json.dumps({
-            'title': title,
-            'detail': detail
-        }),
-        status=status_code,
-        headers={
-            'Content-Type': 'application/problem+json'
-        }
-    )
+@app.errorhandler(404)
+def handle_not_found(e):
+    return http_error(404, "Resource not found")
 
 
 def __is_within_directory(directory, target):
